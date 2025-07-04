@@ -71,13 +71,13 @@ def render_plot(pathname, query_string):
         return html.H3("No query provided.")
 
     params = parse_qs(query_string.lstrip("?"))
-    metric = params.get("metric", [None])[0]
+    metric_name = params.get("metric", [None])[0]
     from_date_str = params.get("from_date", [None])[0]
 
-    if not metric or not from_date_str:
+    if not metric_name or not from_date_str:
         return html.H3("Missing 'metric' or 'from_date' parameters.")
 
-    if metric not in METRICS.keys():
+    if metric_name not in METRICS.keys():
         return html.H3("Metric not found.")
 
     try:
@@ -85,7 +85,7 @@ def render_plot(pathname, query_string):
     except ValueError:
         return html.H3("Invalid date format. Use YYYY-MM-DD.")
 
-    metric_code = METRICS[metric]
+    metric_code = METRICS[metric_name]
 
     query = text("""
         SELECT timestamp, value, unit, sensor
@@ -122,7 +122,7 @@ def render_plot(pathname, query_string):
             x=data["x"], y=data["y"], mode="lines+markers", name=f"Sensor {sensor}"))
 
     fig.update_layout(
-        title=f"{metric.capitalize()} Since {parsed_date}",
+        title=f"{metric_code} / {metric_name} - Since {parsed_date}",
         xaxis_title="Timestamp",
         yaxis_title=f"Value ({unit})" if unit else "Value",
         legend_title="Sensor",
