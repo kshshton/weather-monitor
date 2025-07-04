@@ -3,8 +3,10 @@ import sqlite3
 
 import pandas as pd
 
+from backend.ref.columns import COLUMNS
+
 metadata = []
-_pattern = r"\((?P<sensor>[^)]+).*?(?P<metric>\w+(\s\w+)?).*?(?P<value>\d+(\.\d+)?)\s+(?P<unit>[^\']+)"
+pattern = r"\<(?P<timestamp>\d[^\>]+).*?\((?P<sensor>[^)]+).*?(?P<metric>\w+(\s\w+)?).*?(?P<value>\d+(\.\d+)?)\s+(?P<unit>[^\']+)"
 
 conn = sqlite3.connect("metadata.db")
 cursor = conn.cursor()
@@ -14,11 +16,11 @@ with open("sample.txt", "r") as file:
     lines = [line for line in log.split("\n") if "(" in line]
 
     for line in lines:
-        if match := re.search(_pattern, line):
+        if match := re.search(pattern, line):
             metadata.append(match.groupdict())
 
 df = pd.DataFrame(metadata)
-df.drop_duplicates(subset=["sensor", "metric", "value", "unit"])
+df.drop_duplicates(subset=["timestamp", "sensor", "metric", "value", "unit"])
 df.to_sql("metadata", conn, if_exists="append", index=False)
 
 conn.close()
