@@ -15,13 +15,58 @@ app.layout = html.Div([
     dcc.Location(id="url", refresh=False),
     html.Div(id="plot-container")
 ])
+datetime.now().strftime("%Y-%m-%d")
+
+app.layout = html.Div([
+    dcc.Location(id="url", refresh=False),
+
+    html.Div(
+        children=[
+            html.Span(style={"marginRight": "15px", "fontWeight": "bold"}),
+            *[
+                html.A(
+                    metric_name.replace("_", " "),
+                    href=f"/query?metric={metric_name}&from_date={datetime.now().strftime("%Y-%m-%d")}",
+                    style={
+                        "marginRight": "10px",
+                        "padding": "8px 12px",
+                        "textDecoration": "none",
+                        "color": "white",
+                        "backgroundColor": "#007BFF",
+                        "borderRadius": "5px"
+                    }
+                )
+                for metric_name in METRICS.keys()
+            ]
+        ],
+        style={
+            "padding": "15px 20px",
+            "backgroundColor": "#e9ecef",
+            "borderBottom": "1px solid #ddd"
+        }
+    ),
+
+    html.Div(id="plot-container", style={
+        "display": "flex",
+        "justifyContent": "center",
+        "alignItems": "center",
+        "height": "calc(100vh - 160px)",
+        "padding": "30px",
+        "maxWidth": "1000px",
+        "margin": "0 auto",
+    }),
+], style={"fontFamily": "'Inter', sans-serif", "backgroundColor": "#fff", "color": "#222"})
 
 
 @app.callback(
     Output("plot-container", "children"),
+    Input("url", "pathname"),
     Input("url", "search")
 )
-def render_plot(query_string):
+def render_plot(pathname, query_string):
+    if pathname != "/query":
+        return html.H3("Navigate to /query with the required parameters.")
+
     if not query_string:
         return html.H3("No query provided.")
 
@@ -32,7 +77,7 @@ def render_plot(query_string):
     if not metric or not from_date_str:
         return html.H3("Missing 'metric' or 'from_date' parameters.")
 
-    if metric not in METRICS:
+    if metric not in METRICS.keys():
         return html.H3("Metric not found.")
 
     try:
@@ -80,7 +125,7 @@ def render_plot(query_string):
         title=f"{metric.capitalize()} Since {parsed_date}",
         xaxis_title="Timestamp",
         yaxis_title=f"Value ({unit})" if unit else "Value",
-        legend_title="Sensor"
+        legend_title="Sensor",
     )
 
     return dcc.Graph(figure=fig)
